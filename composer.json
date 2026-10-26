@@ -1,0 +1,19 @@
+{
+    "name": "scal-e/cdp-technical-test",
+    "description": "Simplified Customer Data Platform API for a technical assessment",
+    "type": "project",
+    "require": {
+      "php": "^8.2",
+      "ext-pdo": "*",
+      "ext-pdo_mysql": "*"
+    },
+    "autoload": {
+      "psr-4": {
+        "App\\": "src/"
+      }
+    },
+    "scripts": {
+      "serve": "php -S 127.0.0.1:8080 -t public"
+    }
+  }
+  
