@@ -24,10 +24,14 @@ final class Database
             $name
         );
 
-        return new PDO(
-            $dsn,
-            getenv('DB_USER') ?: 'root',
-            getenv('DB_PASSWORD') ?: ''
-        );
+        try {
+            return new PDO($dsn, $user, $password, [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES => false,
+            ]);
+        } catch (PDOException $e) {
+            throw new RuntimeException('Database connection failed. Check DB settings and schema.', 0, $e);
+        }
     }
 }
