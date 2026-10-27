@@ -35,7 +35,7 @@ final class Request
             throw new InvalidArgumentException('Request body must contain valid JSON.');
         }
 
-        // No list, no array like [af,regen,egz]; must be json object
+        // No list, no array like [1,2,3]; must be json object
         if (!is_array($data) || ($data !== [] && array_is_list($data))) {
             throw new InvalidArgumentException('Request body must be a JSON object.');
         }
