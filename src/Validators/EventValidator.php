@@ -25,5 +25,10 @@ final class EventValidator
         if ($name === '' || mb_strlen($name) > 200) {
             throw new InvalidArgumentException('customer.name is required and must be at most 200 characters.');
         }
+
+        return [
+            'email' => mb_strtolower($email),
+            'name' => $name,
+        ];
     }
 }
