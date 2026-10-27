@@ -20,7 +20,8 @@ final class EventController
     {
         $input = $request->json();
 
-        // A faire : $input msust be validated
+        // $input msust be validated
+        $validated = EventValidator::validate($validated);
 
         $result = $this->eventService->ingest($input);
 
