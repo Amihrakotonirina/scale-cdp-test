@@ -6,6 +6,7 @@ namespace App\Core;
 
 use App\Controllers\CustomerController;
 use App\Controllers\EventController;
+use App\Controllers\SegmentController;
 use InvalidArgumentException;
 
 
@@ -13,7 +14,8 @@ final class Router
 {
     public function __construct(
         private EventController $eventController,
-        private CustomerController $customerController
+        private CustomerController $customerController,
+        private SegmentController $segmentController
     ) {
     }
 
@@ -34,6 +36,14 @@ final class Router
                 && $request->path === '/api/events'
             ) {
                 $this->eventController->store($request);
+            }
+
+            //segment
+            if (
+                $request->method === 'POST'
+                && $request->path === '/api/segments/query'
+            ) {
+                $this->segmentController->query($request);
             }
 
             //GET customers endpoint
