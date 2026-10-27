@@ -21,9 +21,9 @@ final class EventController
         $input = $request->json();
 
         // $input msust be validated
-        $validated = EventValidator::validate($validated);
+        $validated = EventValidator::validate($input);
 
-        $result = $this->eventService->ingest($input);
+        $result = $this->eventService->ingest($validated);
 
         Response::json([
             'message' => 'Event stored.',
