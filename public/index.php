@@ -7,8 +7,8 @@ use App\Controllers\EventController;
 use App\Controllers\SegmentController;
 use App\Core\Database;
 use App\Core\Request;
-use App\Core\Router;
 use App\Core\Response;
+use App\Core\Router;
 use App\Repositories\CustomerRepository;
 use App\Repositories\EventRepository;
 use App\Services\CustomerService;
@@ -22,17 +22,17 @@ try {
 
     // Repositories
     $customerRepository = new CustomerRepository($db);
-    $eventRepository = new EventRepository($db);
+    $eventRepository    = new EventRepository($db);
 
     // Services
-    $eventService = new EventService($eventRepository);
+    $eventService    = new EventService($eventRepository);
     $customerService = new CustomerService($customerRepository);
-    $segmentService = new SegmentService($db);
+    $segmentService  = new SegmentService($db);
 
     // Controllers
-    $eventController = new EventController($eventService);
+    $eventController    = new EventController($eventService);
     $customerController = new CustomerController($customerService);
-    $segmentController = new SegmentController($segmentService);
+    $segmentController  = new SegmentController($segmentService);
 
     // Router
     $router = new Router(
@@ -41,12 +41,14 @@ try {
         $segmentController
     );
 
-    $router->dispatch(Request::fromGlobals());
+    // Build the response (no I/O, no return).
+    $response = $router->dispatch(Request::fromGlobals());
+
+    // Send the response (from Response class).
+    $response->send();
 
 } catch (\Throwable $e) {
     error_log((string) $e);
 
-    \App\Core\Response::json([
-        'error' => 'Internal server error.',
-    ], 500);
+    Response::json(['error' => 'Internal server error.'], 500)->send();
 }
