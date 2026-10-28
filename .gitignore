@@ -1,0 +1,16 @@
+# Dependencies Composer
+/vendor/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+
+# OS
+.DS_Store
