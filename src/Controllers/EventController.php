@@ -16,16 +16,16 @@ final class EventController
     ) {
     }
 
-    public function store(Request $request): never
+    public function store(Request $request): Response
     {
         $input = $request->json();
 
-        // $input msust be validated
+        // $input must be validated before ingestion.
         $validated = EventValidator::validate($input);
 
         $result = $this->eventService->ingest($validated);
 
-        Response::json([
+        return Response::json([
             'message' => 'Event stored.',
             ...$result,
         ], 201);

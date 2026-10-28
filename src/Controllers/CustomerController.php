@@ -14,16 +14,16 @@ final class CustomerController
     ) {
     }
 
-    public function show(int $id): never
+    public function show(int $id): Response
     {
         $profile = $this->customerService->getProfile($id);
 
         if ($profile === null) {
-            Response::json([
+            return Response::json([
                 'error' => 'Customer not found.',
             ], 404);
         }
 
-        Response::json($profile);
+        return Response::json($profile);
     }
 }

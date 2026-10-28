@@ -15,12 +15,12 @@ final class SegmentController
     ) {
     }
 
-    public function query(Request $request): never
+    public function query(Request $request): Response
     {
         $input = $request->json();
 
         $result = $this->segmentService->query($input);
 
-        Response::json($result);
+        return Response::json($result);
     }
 }
