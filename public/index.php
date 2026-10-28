@@ -8,6 +8,7 @@ use App\Controllers\SegmentController;
 use App\Core\Database;
 use App\Core\Request;
 use App\Core\Router;
+use App\Core\Response;
 use App\Repositories\CustomerRepository;
 use App\Repositories\EventRepository;
 use App\Services\CustomerService;

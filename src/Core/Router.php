@@ -27,7 +27,7 @@ final class Router
                 $request->method === 'GET'
                 && $request->path === '/api/health'
             ) {
-                Response::json(['status' => 'ok']);
+                Response::json(['status' => 'API ok.']);
             }
 
             //POST event endpoint
