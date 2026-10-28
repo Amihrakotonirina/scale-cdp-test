@@ -19,34 +19,34 @@ final class Router
     ) {
     }
 
-    public function dispatch(Request $request): never
+    public function dispatch(Request $request): Response
     {
         try {
-            // to check the api's health
+            // Health check
             if (
                 $request->method === 'GET'
                 && $request->path === '/api/health'
             ) {
-                Response::json(['status' => 'API ok.']);
+                return Response::json(['status' => 'API ok.']);
             }
 
-            //POST event endpoint
+            // POST event endpoint
             if (
                 $request->method === 'POST'
                 && $request->path === '/api/events'
             ) {
-                $this->eventController->store($request);
+                return $this->eventController->store($request);
             }
 
-            //segment
+            // Segment
             if (
                 $request->method === 'POST'
                 && $request->path === '/api/segments/query'
             ) {
-                $this->segmentController->query($request);
+                return $this->segmentController->query($request);
             }
 
-            //GET customers endpoint
+            // GET customers endpoint
             if (
                 $request->method === 'GET'
                 && preg_match(
@@ -55,24 +55,17 @@ final class Router
                     $matches
                 )
             ) {
-                $this->customerController->show((int) $matches[1]);
+                return $this->customerController->show((int) $matches[1]);
             }
 
-            Response::json([
-                'error' => 'Not found.',
-            ], 404);
+            return Response::json(['error' => 'Not found.'], 404);
 
         } catch (InvalidArgumentException $e) {
-            Response::json([
-                'error' => $e->getMessage(),
-            ], 422);
+            return Response::json(['error' => $e->getMessage()], 422);
 
         } catch (\Throwable $e) {
             error_log((string) $e);
-
-            Response::json([
-                'error' => 'Internal server error.',
-            ], 500);
+            return Response::json(['error' => 'Internal server error.'], 500);
         }
     }
 }
