@@ -48,6 +48,11 @@ final class EventValidator
             if (is_float($value) && !is_finite($value)) {
                 throw new InvalidArgumentException("Property '{$key}' must be finite.");
             }
+            if ($value === null) {
+                throw new InvalidArgumentException(
+                    "Property '{$key}' must not be null."
+                );
+            }
         }
 
         $timestamp = $input['timestamp'] ?? gmdate('c');

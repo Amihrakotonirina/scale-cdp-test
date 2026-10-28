@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS event_properties (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     event_id BIGINT UNSIGNED NOT NULL,
     property_name VARCHAR(100) NOT NULL,
-    value_type ENUM('number', 'string', 'boolean', 'null') NOT NULL,
+    value_type ENUM('number', 'string', 'boolean') NOT NULL,
     value_number DECIMAL(20, 6) NULL,
     value_string VARCHAR(1000) NULL,
     value_boolean TINYINT(1) NULL,
