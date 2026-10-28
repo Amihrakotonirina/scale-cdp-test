@@ -83,6 +83,13 @@ Once the containers are running, the PHP development server is available at:
 - **MySQL from the host:** `127.0.0.1:3307`
 - **MySQL from the application container:** `db:3306`
 
+| URL | Description |
+|---|---|
+| http://localhost:8080/ | Redirects to Swagger UI |
+| http://localhost:8080/docs | Swagger UI |
+| http://localhost:8080/readme | README (HTML rendered) |
+| http://localhost:8080/openapi.yaml | OpenAPI 3.0 spec |
+
 The database connection is configured through environment variables in `compose.yaml`:
 
 | Variable | Value |
