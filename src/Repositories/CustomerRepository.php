@@ -11,66 +11,99 @@ final class CustomerRepository
 
     public function findProfile(int $id): ?array
     {
-        $customer_stmt = $this->db->prepare('SELECT id, email, name, created_at, updated_at FROM customers WHERE id = :id');
-        $customer_stmt->execute(['id' => $id]);
-        $customer = $customer_stmt->fetch();
+        // Requete 1 : customer (PK lookup)
+        $stmt = $this->db->prepare(
+            'SELECT id, email, name, created_at, updated_at
+             FROM customers
+             WHERE id = :id'
+        );
+        $stmt->execute(['id' => $id]);
+        $customer = $stmt->fetch();
         if (!$customer) {
             return null;
         }
 
-        $customer_stmt = $this->db->prepare(
+        // Requete 2 : stats + spend in ONE pass
+        //   COUNT(DISTINCT e.id) : LEFT JOIN multiple the lines
+        //   (an event with N properties appears N times) so DISTINCT necessary
+        //   SUM(CASE ... THEN ep.value_number END) without ELSE : NULL is ignored by SUM
+        $stmt = $this->db->prepare(
             "SELECT
-                COUNT(*) AS total_events,
-                SUM(CASE WHEN event_name = 'purchase' THEN 1 ELSE 0 END) AS total_purchases
-             FROM events WHERE customer_id = :id"
-        );
-        $customer_stmt->execute(['id' => $id]);
-        $stats = $customer_stmt->fetch();
-
-        $customer_stmt = $this->db->prepare(
-            "SELECT COALESCE(SUM(ep.value_number), 0) AS total_spend
+                COUNT(DISTINCT e.id) AS total_events,
+                COUNT(DISTINCT CASE WHEN e.event_name = 'purchase' THEN e.id END) AS total_purchases,
+                COALESCE(SUM(
+                    CASE
+                        WHEN e.event_name = 'purchase'
+                         AND ep.property_name = 'amount'
+                         AND ep.value_type = 'number'
+                        THEN ep.value_number
+                    END
+                ), 0) AS total_spend
              FROM events e
-             INNER JOIN event_properties ep ON ep.event_id = e.id
-             WHERE e.customer_id = :id
-               AND e.event_name = 'purchase'
-               AND ep.property_name = 'amount'
-               AND ep.value_type = 'number'"
+             LEFT JOIN event_properties ep ON ep.event_id = e.id
+             WHERE e.customer_id = :id"
         );
-        $customer_stmt->execute(['id' => $id]);
-        $spend = $customer_stmt->fetchColumn();
+        $stmt->execute(['id' => $id]);
+        $stats = $stmt->fetch();
 
-        $customer_stmt = $this->db->prepare(
-            "SELECT e.id, e.event_name, e.occurred_at, e.received_at,
-                    COALESCE(
-                      (SELECT JSON_OBJECTAGG(ep.property_name,
-                        CASE ep.value_type
-                          WHEN 'number' THEN ep.value_number
-                          WHEN 'string' THEN ep.value_string
-                          WHEN 'boolean' THEN ep.value_boolean
-                          ELSE NULL
-                        END)
-                       FROM event_properties ep WHERE ep.event_id = e.id),
-                      JSON_OBJECT()
-                    ) AS properties
-             FROM events e
-             WHERE e.customer_id = :id
-             ORDER BY e.occurred_at DESC, e.id DESC
-             LIMIT 10"
+        // Requete 3 : 10 last events (without JSON_OBJECTAGG)
+        //   MySQL serialise DECIMAL and DOUBLE into string dans
+        //   JSON_OBJECTAGG
+        //   (test kO : CAST AS DOUBLE, + 0, JSON_EXTRACT, CAST AS JSON).
+        //   so assemble the JSON in PHP.
+        $stmt = $this->db->prepare(
+            'SELECT id, event_name, occurred_at, received_at
+             FROM events
+             WHERE customer_id = :id
+             ORDER BY occurred_at DESC, id DESC
+             LIMIT 10'
         );
-        $customer_stmt->execute(['id' => $id]);
-        $events = $customer_stmt->fetchAll();
-        foreach ($events as &$event) {
-            $event['id'] = (int)$event['id'];
-            $event['properties'] = json_decode($event['properties'] ?: '{}', true) ?: new \stdClass();
+        $stmt->execute(['id' => $id]);
+        $events = $stmt->fetchAll();
+
+        // Requete 4 : propeties of the 10 events (only one requete IN)
+        if ($events !== []) {
+            $eventIds     = array_column($events, 'id');
+            $placeholders = implode(',', array_fill(0, count($eventIds), '?'));
+
+            $stmt = $this->db->prepare(
+                "SELECT event_id, property_name, value_type,
+                        value_number, value_string, value_boolean
+                 FROM event_properties
+                 WHERE event_id IN ({$placeholders})"
+            );
+            $stmt->execute($eventIds);
+
+            // group by event_id, by casting selon value_type.
+            // so type is correct (float/bool/string), do not depend
+            // in the JSON_OBJECTAGG behaviour
+            $propertiesByEvent = [];
+            foreach ($stmt->fetchAll() as $row) {
+                $value = match ($row['value_type']) {
+                    'number'  => (float) $row['value_number'],
+                    'string'  => $row['value_string'],
+                    'boolean' => (bool) $row['value_boolean'],
+                    default   => null,
+                };
+                $propertiesByEvent[(int) $row['event_id']][$row['property_name']] = $value;
+            }
+
+            foreach ($events as &$event) {
+                $event['id'] = (int) $event['id'];
+                $event['properties'] = (object) ($propertiesByEvent[$event['id']] ?? []);
+            }
+            unset($event);
+        } else {
+            // No event = no requete 4 and properties is empty
+            $events = [];
         }
-        unset($event);
 
         return [
             'customer' => $customer,
             'statistics' => [
-                'total_events' => (int)($stats['total_events'] ?? 0),
-                'total_purchases' => (int)($stats['total_purchases'] ?? 0),
-                'total_spend' => (float)$spend,
+                'total_events'    => (int) $stats['total_events'],
+                'total_purchases' => (int) $stats['total_purchases'],
+                'total_spend'     => (float) $stats['total_spend'],
             ],
             'last_10_events' => $events,
         ];
