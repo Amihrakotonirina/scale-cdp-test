@@ -1,0 +1,347 @@
+openapi: 3.0.3
+info:
+  title: CDP Technical Test API
+  description: |
+    Simplified Customer Data Platform API.
+    
+    - Event ingestion
+    - Customer profiles with statistics
+    - Segmentation queries
+  version: 1.0.0
+  contact:
+    name: Mirana RAKOTONIRINA
+    url: https://github.com/Amihrakotonirina/scale-cdp-test
+
+servers:
+  - url: http://localhost:8080
+    description: Local development
+
+tags:
+  - name: Health
+    description: API health check
+  - name: Events
+    description: Event ingestion
+  - name: Customers
+    description: Customer profiles
+  - name: Segments
+    description: Segmentation queries
+
+paths:
+  /api/health:
+    get:
+      tags: [Health]
+      summary: Health check
+      operationId: healthCheck
+      responses:
+        '200':
+          description: API is running
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "API ok."
+
+  /api/events:
+    post:
+      tags: [Events]
+      summary: Create an event
+      description: |
+        Store a new customer event.
+        - If the customer email does not exist, a new customer is created.
+        - If it exists, the customer name is updated.
+      operationId: createEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventInput'
+      responses:
+        '201':
+          description: Event stored
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Event stored."
+                  customer_id:
+                    type: integer
+                    example: 1
+                  event_id:
+                    type: integer
+                    example: 42
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "A valid customer.email is required."
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/customers/{id}:
+    get:
+      tags: [Customers]
+      summary: Get a customer profile
+      description: |
+        Return the customer profile, statistics, and last 10 events.
+        
+        **Important:** `total_events` is the real total (all events), not
+        the size of `last_10_events` (limited to 10).
+      operationId: getCustomer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            example: 1
+      responses:
+        '200':
+          description: Customer profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerProfile'
+        '404':
+          description: Customer not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Customer not found."
+
+  /api/segments/query:
+    post:
+      tags: [Segments]
+      summary: Query a segment
+      description: |
+        Find customers who match one or more conditions (combined with AND).
+        
+        **Important:** `total` is the real total of matching customers,
+        independent of `limit`/`offset`. This allows correct pagination.
+      operationId: querySegment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SegmentQuery'
+      responses:
+        '200':
+          description: Matching customers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SegmentResult'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "conditions must be a non-empty array."
+
+components:
+  schemas:
+    EventInput:
+      type: object
+      required: [customer, event]
+      properties:
+        customer:
+          type: object
+          required: [email, name]
+          properties:
+            email:
+              type: string
+              format: email
+              maxLength: 254
+              example: "john@example.com"
+            name:
+              type: string
+              maxLength: 200
+              example: "John Doe"
+        event:
+          type: string
+          maxLength: 100
+          pattern: '^[a-zA-Z][a-zA-Z0-9_.-]{0,99}$'
+          example: "purchase"
+        properties:
+          type: object
+          maxProperties: 50
+          additionalProperties:
+            oneOf:
+              - type: integer
+              - type: number
+              - type: string
+                maxLength: 1000
+              - type: boolean
+          example:
+            amount: 120
+            product: "Shoes"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-04-10T12:00:00Z"
+
+    CustomerProfile:
+      type: object
+      properties:
+        customer:
+          $ref: '#/components/schemas/Customer'
+        statistics:
+          $ref: '#/components/schemas/Statistics'
+        last_10_events:
+          type: array
+          maxItems: 10
+          items:
+            $ref: '#/components/schemas/Event'
+
+    Customer:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        email:
+          type: string
+          format: email
+          example: "mirana@example.com"
+        name:
+          type: string
+          example: "Mirana Rakotonirina"
+        created_at:
+          type: string
+          example: "2026-04-01 09:00:00.000000"
+        updated_at:
+          type: string
+          example: "2026-04-10 12:00:00.000000"
+
+    Statistics:
+      type: object
+      properties:
+        total_events:
+          type: integer
+          description: Real total (all events), not the page size
+          example: 3
+        total_purchases:
+          type: integer
+          example: 2
+        total_spend:
+          type: number
+          format: float
+          example: 195.5
+
+    Event:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1003
+        event_name:
+          type: string
+          example: "purchase"
+        occurred_at:
+          type: string
+          example: "2026-04-15 16:20:00.000000"
+        received_at:
+          type: string
+          example: "2026-04-15 16:20:01.000000"
+        properties:
+          type: object
+          example:
+            amount: 75.5
+            product: "Socks"
+
+    SegmentQuery:
+      type: object
+      required: [conditions]
+      properties:
+        conditions:
+          type: array
+          minItems: 1
+          maxItems: 10
+          items:
+            $ref: '#/components/schemas/Condition'
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        offset:
+          type: integer
+          minimum: 0
+          default: 0
+
+    Condition:
+      type: object
+      required: [event, property, operator, value]
+      properties:
+        event:
+          type: string
+          example: "purchase"
+        property:
+          type: string
+          example: "amount"
+        operator:
+          type: string
+          enum: ['=', '!=', '>', '>=', '<', '<=']
+          example: ">"
+        value:
+          oneOf:
+            - type: integer
+            - type: number
+            - type: string
+            - type: boolean
+          example: 100
+
+    SegmentResult:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: Real total of matching customers, independent of limit/offset
+          example: 3
+        limit:
+          type: integer
+          example: 50
+        offset:
+          type: integer
+          example: 0
+        customers:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                example: 1
+              email:
+                type: string
+                format: email
+                example: "mirana@example.com"
+              name:
+                type: string
+                example: "Mirana Rakotonirina"
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "A valid customer.email is required."

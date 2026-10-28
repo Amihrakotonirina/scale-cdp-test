@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CDP API — Swagger UI</title>
+    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css">
+    <style>
+        :root {
+            --brand: #0b3d91;
+            --brand-light: #1e5fc2;
+            --bg: #f7f9fc;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        /*  Header  */
+        .app-header {
+            background: linear-gradient(135deg, var(--brand) 0%, var(--brand-light) 100%);
+            color: #fff;
+            padding: 1.5rem 2rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .app-header__inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .app-header__title {
+            margin: 0;
+            font-size: 1.4rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        .app-header__title small {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 400;
+            opacity: 0.85;
+            margin-top: 0.2rem;
+        }
+
+        .app-header__actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 0.9rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: background 0.15s, transform 0.05s;
+            border: 1px solid transparent;
+        }
+
+        .btn:active { transform: translateY(1px); }
+
+        .btn--ghost {
+            background: rgba(255, 255, 255, 0.12);
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+
+        .btn--ghost:hover {
+            background: rgba(255, 255, 255, 0.22);
+            color: #fff;
+        }
+
+        .btn--solid {
+            background: #fff;
+            color: var(--brand);
+        }
+
+        .btn--solid:hover {
+            background: #eef2f9;
+            color: var(--brand);
+        }
+
+        /*  Info bar  */
+        .app-info {
+            max-width: 1200px;
+            margin: 1rem auto 0;
+            padding: 0.9rem 1.25rem;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+        }
+
+        .app-info code {
+            background: #eef2f9;
+            color: var(--brand);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.82rem;
+        }
+
+        .app-info__dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+        }
+
+        /*  Swagger UI container  */
+        #swagger-ui {
+            max-width: 1200px;
+            margin: 1.5rem auto 3rem;
+            padding: 0 1rem;
+        }
+
+        /* Surcharge du thème Swagger */
+        .swagger-ui .topbar { display: none; }
+
+        .swagger-ui .info .title {
+            color: var(--brand);
+        }
+
+        .swagger-ui .opblock.opblock-post { background: rgba(30, 95, 194, 0.04); }
+        .swagger-ui .opblock.opblock-get  { background: rgba(59, 130, 246, 0.04); }
+        .swagger-ui .opblock.opblock-post .opblock-summary-method { background: var(--brand-light); }
+
+        /*  Fallback (si Swagger UI ne charge pas)  */
+        .swagger-fallback {
+            display: none;
+            max-width: 720px;
+            margin: 3rem auto;
+            padding: 1.5rem;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            text-align: center;
+            color: var(--muted);
+        }
+
+        .swagger-fallback h2 {
+            margin-top: 0;
+            color: var(--text);
+            font-size: 1.1rem;
+        }
+
+        .swagger-fallback code {
+            background: #eef2f9;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            color: var(--brand);
+        }
+
+        .no-swagger .swagger-fallback { display: block; }
+        .no-swagger #swagger-ui       { display: none; }
+
+        /*  Responsive  */
+        @media (max-width: 640px) {
+            .app-header { padding: 1rem; }
+            .app-header__title { font-size: 1.1rem; }
+            .app-header__actions { width: 100%; }
+            .btn { flex: 1; justify-content: center; }
+            .app-info { margin: 1rem 1rem 0; padding: 0.75rem; font-size: 0.82rem; }
+            #swagger-ui { padding: 0 0.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!--  Header  -->
+    <header class="app-header">
+        <div class="app-header__inner">
+            <h1 class="app-header__title">
+                CDP API
+                <small>Customer Data Platform — Technical Test</small>
+            </h1>
+            <div class="app-header__actions">
+                <a class="btn btn--solid" href="https://github.com/Amihrakotonirina/scale-cdp-test" target="_blank" rel="noopener">
+                    GitHub
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!--  Info bar  -->
+    <div class="app-info">
+        <span class="app-info__dot"></span>
+        <span>API is running on <code>http://localhost:8080</code> — click <strong>Try it out</strong> on any endpoint to send a real request.</span>
+    </div>
+
+    <!--  Swagger UI  -->
+    <div id="swagger-ui"></div>
+
+    <!--  Fallback (CDN down)  -->
+    <div class="swagger-fallback">
+        <h2>Swagger UI could not be loaded</h2>
+        <p>
+            This page loads Swagger UI from a CDN (<code>unpkg.com</code>).
+            If you are offline or behind a restrictive network, the UI cannot
+            render.
+        </p>
+        <p>
+            The OpenAPI spec is still available at
+            <a href="/openapi.yaml"><code>/openapi.yaml</code></a>.
+            You can view it with any OpenAPI viewer, or import it into
+            <a href="https://editor.swagger.io/" target="_blank" rel="noopener">editor.swagger.io</a>.
+        </p>
+    </div>
+
+    <!--  Scripts  -->
+    <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+    <script>
+        (function () {
+            // If Swagger UI failed to load from the CDN, show the fallback.
+            if (typeof SwaggerUIBundle === 'undefined') {
+                document.body.classList.add('no-swagger');
+                return;
+            }
+
+            window.ui = SwaggerUIBundle({
+                url: '/openapi.yaml',
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIBundle.SwaggerUIStandalonePreset
+                ],
+                layout: 'BaseLayout',
+                docExpansion: 'list',      // 'list' = collapsed by default
+                defaultModelsExpandDepth: 1,
+                tryItOutEnabled: true,     // open "Try it out" by default
+                displayRequestDuration: true,
+                filter: true,              // search box
+                persistAuthorization: true
+            });
+        })();
+    </script>
+</body>
+</html>
